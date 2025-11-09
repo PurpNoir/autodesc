@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AutoDesc — generate product descriptions</title>
+  <style>
+    body { font-family: system-ui, Arial; padding: 24px; max-width: 760px; margin: auto; }
+    textarea, input { width: 100%; padding: 8px; margin: 6px 0; }
+    button { padding: 10px 16px; }
+    .result { background: #f6f6f6; padding: 12px; border-radius: 6px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <h1>AutoDesc</h1>
+  <p>Вставьте название товара и получите SEO-описание.</p>
+  <input id="title" placeholder="Название товара, например: 'Органический мед 500г'"/>
+  <input id="category" placeholder="Категория (опционально)"/>
+  <select id="tone">
+    <option value="neutral">Нейтральный</option>
+    <option value="friendly">Дружелюбный</option>
+    <option value="luxury">Премиум</option>
+  </select>
+  <button id="gen">Сгенерировать</button>
+  <div id="out" class="result" style="display:none;"></div>
+
+  <script>
+    const genBtn = document.getElementById('gen');
+    genBtn.onclick = async () => {
+      const title = document.getElementById('title').value;
+      const category = document.getElementById('category').value;
+      const tone = document.getElementById('tone').value;
+      if (!title) return alert('Введите название товара');
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ title, category, tone })
+      });
+      const data = await res.json();
+      const out = document.getElementById('out');
+      if (!data.ok) {
+        out.style.display = 'block';
+        out.innerText = 'Ошибка: ' + (data.error || JSON.stringify(data));
+        return;
+      }
+      const r = data.result;
+      out.style.display = 'block';
+      out.innerHTML = '<strong>Description</strong><p>' + (r.description || '') + '</p>'
+        + '<strong>Tags</strong><p>' + (r.tags || '') + '</p>'
+        + '<strong>Benefits</strong><ul>' + ((r.benefits||[]).map(b=>'<li>'+b+'</li>').join('')) + '</ul>';
+    };
+  </script>
+</body>
+</html>
